@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+    web:
+        build:
+            context: ./demo_flask
+        ports:
+        - 5000:5000
+        volumes:
+        - ./demo_flask:/app
+        depends_on:
+            postgresdb:
+                condition: service_healthy
+
+    listener:
+        build:
+            context: ./demo_listen
+        ports:
+        - 3307:3307
+        depends_on:
+            postgresdb:
+                condition: service_healthy
+
+    postgresdb:
+        image: postgres
+        ports:
+        - 3306:3306
+        environment:
+        - POSTGRES_PASSWORD=p@ssw0rd1
+        volumes:
+        - postgres:/var/lib/postgres
+        - postgres_config:/etc/postgres
+        healthcheck:
+            test: pg_isready -d postgres -h postgresdb -U postgres
+            interval: 5s
+            timeout: 20s
+            retries: 3
+
+volumes:
+    postgres:
+    postgres_config:
